@@ -1,5 +1,5 @@
 from application import app
-from flask import render_template, flash, request, url_for
+from flask import render_template, flash, request, url_for, redirect
 from application.forms import TodoForm
 from datetime import datetime
 from application import db
@@ -14,7 +14,7 @@ def get_todos():
         todo["-id"]=str(todo["_id"])
         todo["date_created"]=todo["date_created"].strftime("%b %d %Y %H:%M%S")
         todos.append(todo)
-    return render_template("layout.html", title ="Layout page", todos=todos)
+    return render_template("view_todos.html", title ="Layout page", todos=todos)
 
 @app.route("/add_todo", methods=["POST","GET"])
 def add_todo():
@@ -56,9 +56,14 @@ def update_todo(id):
         return redirect("/")
     else:
         form= TodoForm()
-
-        todo=db.todo_flask.find_one_or_404({"_id":ObjectId(id)})
+        todo=db.todo_flask.find_one({"_id":ObjectId(id)})
         form.name.data= todo.get("name",None)
         form.description.data= todo.get("description",None)
         form.completed.data= todo.get("completed",None)
     return render_template("add_todo.html", form=form)
+
+@app.route("/delete_todo/<id>")
+def delete_todo(id):
+    db.todo_flask.find_one_and_delete({"_id":ObjectId(id)})
+    flash("Todo deleted","Success")
+    return redirect("/")
